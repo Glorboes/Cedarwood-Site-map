@@ -537,13 +537,6 @@ function fieldHTML(label, value, alert){
   return `<div class="${cls}"><div class="k">${label}</div>`
        + `<div class="${vCls}">${v ? escapeHtml(v) : "— none —"}</div></div>`;
 }
-function cabinetHTML(value){
-  const v=(value||"").trim();
-  if(!v) return `<div class="field"><div class="k">Cabinet Types</div><div class="v empty">— none —</div></div>`;
-  const parts=v.split(/[;,]/).map(s=>s.trim()).filter(Boolean);
-  const pills=parts.map(p=>`<span class="pill">${escapeHtml(p)}</span>`).join("");
-  return `<div class="field"><div class="k">Cabinet Types</div><div class="v">${pills}</div></div>`;
-}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 
 function openDetail(n){
@@ -556,8 +549,7 @@ function openDetail(n){
   badge.querySelector(".dot").style.opacity=".55";
   badge.querySelector(".lab").textContent=u.status;
   document.getElementById("dBody").innerHTML =
-      cabinetHTML(u.cabinet_types)
-    + fieldHTML("Snagging Items", u.snagging, !!(u.snagging&&u.snagging.trim()))
+      fieldHTML("Snagging Items", u.snagging, !!(u.snagging&&u.snagging.trim()))
     + fieldHTML("Missing Parts", u.missing_parts, !!(u.missing_parts&&u.missing_parts.trim()))
     + fieldHTML("Notes", u.notes, false);
   const ov=document.getElementById("overlay");

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e1217">
+<title>Cedarwood Development — Site Map</title>
+<style>
+  /* ============================================================
+     CONFIG note: the data source (Google Sheet CSV URL) is set
+     in the <script> block at the bottom — search for CSV_URL.
+     ============================================================ */
+  :root{
+    --bg:#0e1217;
+    --bg2:#141a22;
+    --panel:#1a212b;
+    --panel2:#212a36;
+    --border:#2b3543;
+    --border2:#384556;
+    --text:#e7ecf3;
+    --muted:#92a0b3;
+    --muted2:#6b7889;
+    --accent:#4f8cff;
+    --accent-dim:#27406b;
+    /* status colours */
+    --s-notstarted:#6b7280;
+    --s-inprogress:#f59e0b;
+    --s-carcasses:#3b82f6;
+    --s-doors:#8b5cf6;
+    --s-snagging:#ef4444;
+    --s-complete:#22c55e;
+    --s-onhold:#eab308;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;line-height:1.4;
+    padding-bottom:env(safe-area-inset-bottom);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(180deg,#11161d,#0e1217);
+    border-bottom:1px solid var(--border);
+    padding:10px 14px calc(8px + env(safe-area-inset-top,0)) 14px;
+    padding-top:calc(10px + env(safe-area-inset-top,0));
+  }
+  .head-row{display:flex;align-items:center;gap:10px}
+  .brand{flex:1;min-width:0}
+  .brand h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.2px}
+  .brand p{margin:1px 0 0;font-size:11.5px;color:var(--muted)}
+  .head-btns{display:flex;gap:6px}
+  .iconbtn{
+    background:var(--panel);border:1px solid var(--border);color:var(--text);
+    width:38px;height:38px;border-radius:10px;font-size:16px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.15s;
+  }
+  .iconbtn:active{transform:scale(.93);background:var(--panel2)}
+
+  .progress{margin-top:9px}
+  .progress-bar{height:7px;border-radius:6px;background:#222c38;overflow:hidden;display:flex}
+  .progress-bar span{height:100%;display:block}
+  .progress-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px}
+  .src-badge{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+  .src-badge.live{color:#7ee2a8;border-color:#235e3f;background:#10251a}
+  .src-badge.placeholder{color:#f3c969;border-color:#5e4f23;background:#241f10}
+  .src-badge.error{color:#f59b9b;border-color:#5e2323;background:#241010}
+
+  /* ---------- Filter chips ---------- */
+  .filters{
+    display:flex;gap:7px;overflow-x:auto;padding:11px 14px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  .filters::-webkit-scrollbar{display:none}
+  .chip{
+    flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;
+    background:var(--panel);border:1px solid var(--border);color:var(--text);
+    padding:7px 11px;border-radius:20px;font-size:12.5px;cursor:pointer;
+    white-space:nowrap;transition:.15s;
+  }
+  .chip b{font-weight:700;color:var(--muted);font-size:11.5px}
+  .chip.active{border-color:var(--accent);background:var(--accent-dim)}
+  .chip.active b{color:var(--text)}
+  .chip:active{transform:scale(.96)}
+  .chip .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+
+  /* ---------- Legend (collapsible) ---------- */
+  .legend-wrap{padding:0 14px 4px}
+  .legend-toggle{
+    background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;
+    display:flex;align-items:center;gap:6px;padding:4px 0;
+  }
+  .legend-toggle .arw{transition:.2s;font-size:10px}
+  .legend-wrap.open .arw{transform:rotate(90deg)}
+  .legend{display:none;flex-wrap:wrap;gap:8px 16px;padding:8px 0 10px}
+  .legend-wrap.open .legend{display:flex}
+  .legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+  .legend-item .sw{width:13px;height:13px;border-radius:4px}
+
+  /* ---------- Site map ---------- */
+  .map-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 14px 18px}
+  .map-inner{display:flex;gap:10px;min-width:min-content}
+  .floor-labels{display:flex;flex-direction:column;flex:0 0 auto}
+  .label-spacer{height:48px}
+  .floor-label{
+    height:50px;display:flex;align-items:center;justify-content:center;
+    width:20px;color:var(--muted2);font-size:12px;font-weight:600;
+  }
+  .buildings{display:flex;gap:16px;align-items:flex-start}
+  .building{flex:0 0 auto}
+  .building-header{
+    height:48px;display:flex;flex-direction:column;justify-content:flex-end;
+    padding-bottom:5px;
+  }
+  .building-title{
+    font-size:12px;font-weight:700;color:var(--text);text-align:center;
+    background:var(--panel);border:1px solid var(--border);border-radius:8px;
+    padding:4px 8px;white-space:nowrap;
+  }
+  .subheads{display:flex;gap:10px;justify-content:center;min-height:0;margin-top:4px}
+  .subhead{flex:1;text-align:center;font-size:10.5px;color:var(--muted2);font-weight:600}
+  .floors{display:flex;flex-direction:column;gap:4px}
+  .floor-row{height:50px;display:flex;gap:10px}
+  .subgroup{display:flex;gap:4px}
+
+  /* ---------- Tiles ---------- */
+  .tile{
+    position:relative;width:42px;height:50px;border:none;border-radius:9px;
+    background:var(--c,#6b7280);color:var(--tc,#fff);
+    font-size:15px;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .12s, box-shadow .15s, opacity .15s;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.4);
+  }
+  .tile:active{transform:scale(.9)}
+  .tile.top-flat{
+    border-top-left-radius:3px;border-top-right-radius:3px;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.55), inset 0 0 0 1px rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.4);
+  }
+  .tile.top-flat::after{
+    content:"▲";position:absolute;top:1px;right:3px;font-size:7px;opacity:.7;
+  }
+  .tile.dim{opacity:.16;filter:grayscale(.4)}
+  .tile.match{box-shadow:inset 0 0 0 2px #fff, 0 0 0 2px var(--accent), 0 2px 6px rgba(0,0,0,.5)}
+  .tile-num{pointer-events:none}
+
+  /* ---------- Bottom sections (Middle / Duplexes) ---------- */
+  .sections{padding:0 14px 26px;display:flex;flex-direction:column;gap:14px}
+  .section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .section-label{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:9px;letter-spacing:.3px;text-transform:uppercase}
+  .section-tiles{display:flex;flex-wrap:wrap;gap:8px}
+
+  .scroll-hint{font-size:11px;color:var(--muted2);padding:0 14px 6px;display:none}
+  @media (max-width:560px){ .scroll-hint{display:block} }
+
+  /* ---------- Detail panel ---------- */
+  .overlay{
+    position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);
+    display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(2px);
+  }
+  .overlay.show{opacity:1;pointer-events:auto}
+  .panel{
+    width:100%;max-width:520px;background:var(--panel);
+    border-radius:18px 18px 0 0;border:1px solid var(--border);border-bottom:none;
+    padding:0 0 calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto;
+    transform:translateY(100%);transition:transform .26s cubic-bezier(.2,.8,.25,1);
+  }
+  .overlay.show .panel{transform:translateY(0)}
+  .grabber{width:38px;height:4px;border-radius:3px;background:var(--border2);margin:9px auto 4px}
+  .panel-head{padding:8px 18px 14px;border-bottom:1px solid var(--border);position:relative}
+  .panel-head h2{margin:0;font-size:21px;font-weight:800}
+  .panel-head .loc{color:var(--muted);font-size:13px;margin-top:3px}
+  .panel-close{
+    position:absolute;top:6px;right:14px;background:var(--panel2);border:1px solid var(--border);
+    color:var(--text);width:32px;height:32px;border-radius:9px;font-size:17px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .status-badge{
+    display:inline-flex;align-items:center;gap:7px;margin-top:10px;
+    padding:6px 12px;border-radius:20px;font-size:13px;font-weight:700;
+  }
+  .status-badge .dot{width:10px;height:10px;border-radius:50%}
+  .detail-body{padding:6px 18px 4px}
+  .field{padding:13px 0;border-bottom:1px solid var(--border)}
+  .field:last-child{border-bottom:none}
+  .field .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted2);font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+  .field .v{font-size:14.5px;white-space:pre-wrap;word-break:break-word}
+  .field .v.empty{color:var(--muted2);font-style:italic}
+  .field.alert .k{color:#f3a3a3}
+  .field.alert .v{color:#ffd9d9}
+  .pill{display:inline-block;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12.5px;margin:0 5px 5px 0}
+
+  .empty-state{padding:40px 20px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="head-row">
+      <div class="brand">
+        <h1>Cedarwood Development</h1>
+        <p>MAVS Property Developers &nbsp;·&nbsp; My Cabinet Guy</p>
+      </div>
+      <div class="head-btns">
+        <button class="iconbtn" id="btnRefresh" title="Refresh data" aria-label="Refresh">↻</button>
+        <button class="iconbtn" id="btnSettings" title="Set data source" aria-label="Settings">⚙</button>
+      </div>
+    </div>
+    <div class="progress">
+      <div class="progress-bar" id="progressBar"></div>
+      <div class="progress-meta">
+        <span id="progressText">Loading…</span>
+        <span class="src-badge" id="srcBadge">…</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="legend-wrap" id="legendWrap">
+    <button class="legend-toggle" id="legendToggle"><span class="arw">▶</span> Status colour key</button>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="scroll-hint">← swipe the map sideways to see all blocks →</div>
+
+  <div class="map-scroll">
+    <div id="map"></div>
+  </div>
+
+  <div class="sections">
+    <div class="section" id="sec-middle"></div>
+    <div class="section" id="sec-duplex"></div>
+  </div>
+
+</div>
+
+<!-- Unit detail panel -->
+<div class="overlay" id="overlay">
+  <div class="panel" id="panel" role="dialog" aria-modal="true">
+    <div class="grabber"></div>
+    <div class="panel-head">
+      <button class="panel-close" id="panelClose" aria-label="Close">✕</button>
+      <h2 id="dTitle">Unit</h2>
+      <div class="loc" id="dLoc"></div>
+      <div class="status-badge" id="dStatus"><span class="dot"></span><span class="lab"></span></div>
+    </div>
+    <div class="detail-body" id="dBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   CEDARWOOD DEVELOPMENT — SITE MAP
+   ----------------------------------------------------------------------------
+   DATA SOURCE
+   Paste your published Google Sheet CSV link below (File ▸ Share ▸
+   Publish to web ▸ choose the sheet ▸ CSV). It looks like:
+     https://docs.google.com/spreadsheets/d/e/XXXX/pub?gid=0&single=true&output=csv
+
+   You can also set it without editing this file:
+     • tap the ⚙ button in the app and paste the URL (saved on the device), or
+     • add ?csv=<url> to the page address.
+   If left blank, the app shows placeholder data (all 48 units "Not Started").
+============================================================================ */
+const CONFIG = {
+  CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQeiBvCAxe7QS-zKFTVh5LUPlAc1-dpraOPSsWHzN1Zg8p38_5Go2eAmMmOesicHezQkj089PYPSB1z/pub?output=csv",
+  REFRESH_MINUTES: 0    // set e.g. 5 to auto-refresh every 5 minutes
+};
+
+/* ---------- Status definitions (order = legend / filter order) ---------- */
+const STATUSES = [
+  { name:"Not Started",          color:"#6b7280" },
+  { name:"In Progress",          color:"#f59e0b" },
+  { name:"Carcasses Done",       color:"#3b82f6" },
+  { name:"Doors & Drawers Done", color:"#8b5cf6" },
+  { name:"Snagging",             color:"#ef4444" },
+  { name:"Complete",             color:"#22c55e" },
+  { name:"On Hold",              color:"#eab308" }
+];
+const STATUS_COLOR = {};
+const STATUS_LOOKUP = {};            // normalised key -> canonical name
+STATUSES.forEach(s=>{
+  STATUS_COLOR[s.name]=s.color;
+  STATUS_LOOKUP[normKey(s.name)]=s.name;
+});
+function normKey(s){ return String(s||"").trim().toLowerCase().replace(/[\s&_\-]+/g,""); }
+function statusColor(name){ return STATUS_COLOR[name] || STATUS_COLOR["Not Started"]; }
+function normalizeStatus(raw){ return STATUS_LOOKUP[normKey(raw)] || "Not Started"; }
+
+/* ---------- Physical site layout ----------
+   Each "building" holds one or more sub-columns. Single blocks (A, D) have
+   one sub-column; shared buildings (B+C, E+F) have two. Floor 4 = Top Flats. */
+const FLOORS = [4,3,2,1];
+const BLOCKS = [
+  { key:"A",  label:"A Block",   shared:false, cols:[
+      { sub:"A", floors:{4:[4],  3:[3],     2:[2],     1:[1]    } } ] },
+  { key:"BC", label:"B+C Block", shared:true,  cols:[
+      { sub:"B", floors:{4:[11,12],3:[9,10], 2:[7,8],   1:[5,6]  } },
+      { sub:"C", floors:{4:[19,20],3:[17,18],2:[15,16], 1:[13,14]} } ] },
+  { key:"D",  label:"D Block",   shared:false, cols:[
+      { sub:"D", floors:{4:[24], 3:[23],    2:[22],    1:[21]   } } ] },
+  { key:"EF", label:"E+F Block", shared:true,  cols:[
+      { sub:"E", floors:{4:[31,32],3:[29,30],2:[27,28], 1:[25,26]} },
+      { sub:"F", floors:{4:[39,40],3:[37,38],2:[35,36], 1:[33,34]} } ] }
+];
+const MIDDLE = [41,42];
+const DUPLEX = [43,44,45,46,47,48];
+
+const BLOCK_FULLNAME = {
+  A:"A Block", B:"B Block (B+C)", C:"C Block (B+C)",
+  D:"D Block", E:"E Block (E+F)", F:"F Block (E+F)",
+  Middle:"Middle Flats", Duplex:"Duplexes"
+};
+
+/* ---------- State ---------- */
+const state = { units:{}, filter:"", source:"placeholder", error:"", updated:null };
+
+/* ============================ DATA ============================ */
+function buildPlaceholder(){
+  const units = {};
+  BLOCKS.forEach(b => b.cols.forEach(col => {
+    FLOORS.forEach(f => (col.floors[f]||[]).forEach(n => {
+      units[n] = mkUnit(n, col.sub, String(f), f===4 ? "Top Flat" : "Main Flat");
+    }));
+  }));
+  MIDDLE.forEach(n => units[n] = mkUnit(n, "Middle", "", "Middle Flat"));
+  DUPLEX.forEach(n => units[n] = mkUnit(n, "Duplex", "", "Duplex"));
+  return units;
+}
+function mkUnit(n, block, floor, type){
+  return { unit_number:String(n), block, floor, unit_type:type,
+           status:"Not Started", cabinet_types:"", snagging:"", missing_parts:"", notes:"" };
+}
+
+/* RFC-4180-ish CSV parser: handles quotes, embedded commas/newlines, CRLF, BOM */
+function parseCSV(text){
+  if(!text) return [];
+  if(text.charCodeAt(0)===0xFEFF) text = text.slice(1);
+  const rows=[]; let row=[], field="", q=false, i=0;
+  while(i < text.length){
+    const c = text[i];
+    if(q){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field+='"'; i+=2; continue; }
+        q=false; i++; continue;
+      }
+      field+=c; i++; continue;
+    }
+    if(c === '"'){ q=true; i++; continue; }
+    if(c === ','){ row.push(field); field=""; i++; continue; }
+    if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=""; i++; continue; }
+    if(c === '\r'){ i++; continue; }
+    field+=c; i++;
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+function mergeCsv(rows){
+  const units = buildPlaceholder();
+  if(!rows.length) return units;
+  const header = rows[0].map(h => normKey(h));
+  const col = name => header.indexOf(name);
+  const iNum=col("unitnumber"), iType=col("unittype"), iStatus=col("status"),
+        iCab=col("cabinettypes"), iSnag=col("snagging"),
+        iMiss=col("missingparts"), iNotes=col("notes"),
+        iBlock=col("block"), iFloor=col("floor");
+  if(iNum < 0) return units;            // no recognisable unit column
+  const get=(r,idx)=> idx>=0 ? String(r[idx]??"").trim() : "";
+  for(let r=1; r<rows.length; r++){
+    const row = rows[r];
+    if(!row || row.every(c => String(c).trim()==="")) continue;
+    const num = get(row,iNum); if(!num) continue;
+    const u = units[num]; if(!u) continue;             // ignore unknown unit numbers
+    if(get(row,iType))  u.unit_type     = get(row,iType);
+    if(iBlock>=0 && get(row,iBlock)) u.block = get(row,iBlock);
+    if(iFloor>=0 && get(row,iFloor)) u.floor = get(row,iFloor);
+    u.status        = normalizeStatus(get(row,iStatus));
+    u.cabinet_types = get(row,iCab);
+    u.snagging      = get(row,iSnag);
+    u.missing_parts = get(row,iMiss);
+    u.notes         = get(row,iNotes);
+  }
+  return units;
+}
+
+function getCsvUrl(){
+  const p = new URLSearchParams(location.search).get("csv");
+  if(p) return p.trim();
+  const ls = localStorage.getItem("cedarwood_csv_url");
+  if(ls) return ls.trim();
+  return CONFIG.CSV_URL.trim();
+}
+
+async function loadData(){
+  const url = getCsvUrl();
+  setBadge("loading");
+  if(!url){ state.source="placeholder"; setUnits(buildPlaceholder()); return; }
+  try{
+    const res = await fetch(url, { cache:"no-store" });
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const text = await res.text();
+    state.source="live"; state.error=""; state.updated=new Date();
+    setUnits(mergeCsv(parseCSV(text)));
+  }catch(e){
+    state.source="error"; state.error=e.message;
+    setUnits(buildPlaceholder());
+  }
+}
+function setUnits(u){ state.units=u; renderAll(); }
+
+/* ============================ RENDER ============================ */
+function textColor(hex){
+  const c=hex.replace("#",""); const r=parseInt(c.substr(0,2),16),
+        g=parseInt(c.substr(2,2),16), b=parseInt(c.substr(4,2),16);
+  return (0.299*r+0.587*g+0.114*b)/255 > 0.62 ? "#15202b" : "#ffffff";
+}
+
+function tileHTML(n){
+  const u=state.units[n]; if(!u) return "";
+  const c=statusColor(u.status), tc=textColor(c);
+  const top = u.unit_type==="Top Flat" ? " top-flat":"";
+  let extra="";
+  if(state.filter){ extra = (u.status===state.filter) ? " match" : " dim"; }
+  return `<button class="tile${top}${extra}" data-unit="${n}" style="--c:${c};--tc:${tc}" `
+       + `title="Unit ${n} — ${u.status}"><span class="tile-num">${n}</span></button>`;
+}
+
+function renderMap(){
+  let buildings="";
+  BLOCKS.forEach(b=>{
+    const subheads = b.shared ? b.cols.map(c=>`<div class="subhead">${c.sub}</div>`).join("") : "";
+    let floorsHtml="";
+    FLOORS.forEach(f=>{
+      let groups="";
+      b.cols.forEach(c=>{
+        groups += `<div class="subgroup">${(c.floors[f]||[]).map(tileHTML).join("")}</div>`;
+      });
+      floorsHtml += `<div class="floor-row">${groups}</div>`;
+    });
+    buildings += `<div class="building">
+        <div class="building-header">
+          <div class="building-title">${b.label}</div>
+          <div class="subheads">${subheads}</div>
+        </div>
+        <div class="floors">${floorsHtml}</div>
+      </div>`;
+  });
+  const labels = `<div class="floor-labels"><div class="label-spacer"></div>`
+    + FLOORS.map(f=>`<div class="floor-label">${f}</div>`).join("") + `</div>`;
+  document.getElementById("map").innerHTML =
+    `<div class="map-inner">${labels}<div class="buildings">${buildings}</div></div>`;
+
+  renderSection("sec-middle","Middle Flats", MIDDLE);
+  renderSection("sec-duplex","Duplexes", DUPLEX);
+}
+function renderSection(id,label,arr){
+  document.getElementById(id).innerHTML =
+    `<div class="section-label">${label}</div>`
+    + `<div class="section-tiles">${arr.map(tileHTML).join("")}</div>`;
+}
+
+function counts(){
+  const c={}; STATUSES.forEach(s=>c[s.name]=0);
+  Object.values(state.units).forEach(u=>{ c[u.status]=(c[u.status]||0)+1; });
+  return c;
+}
+
+function renderFilters(){
+  const c=counts(), total=Object.keys(state.units).length;
+  let h=`<button class="chip${state.filter===""?" active":""}" data-filter="">All <b>${total}</b></button>`;
+  STATUSES.forEach(s=>{
+    h+=`<button class="chip${state.filter===s.name?" active":""}" data-filter="${s.name}">`
+      +`<span class="dot" style="background:${s.color}"></span>${s.name} <b>${c[s.name]}</b></button>`;
+  });
+  document.getElementById("filters").innerHTML=h;
+}
+
+function renderLegend(){
+  document.getElementById("legend").innerHTML = STATUSES.map(s=>
+    `<div class="legend-item"><span class="sw" style="background:${s.color}"></span>${s.name}</div>`
+  ).join("");
+}
+
+function renderProgress(){
+  const c=counts(), total=Object.keys(state.units).length;
+  // build proportional bar across all statuses
+  document.getElementById("progressBar").innerHTML = STATUSES
+    .filter(s=>c[s.name]>0)
+    .map(s=>`<span style="width:${(c[s.name]/total*100).toFixed(2)}%;background:${s.color}"></span>`)
+    .join("") || `<span style="width:100%;background:#222c38"></span>`;
+  const done=c["Complete"]||0;
+  document.getElementById("progressText").textContent =
+    `${done}/${total} complete · ${c["In Progress"]||0} in progress · ${c["Snagging"]||0} snagging`;
+}
+
+function setBadge(kind){
+  const el=document.getElementById("srcBadge");
+  el.className="src-badge "+(kind==="loading"?"":kind);
+  if(kind==="loading"){ el.textContent="Loading…"; return; }
+  if(state.source==="live"){
+    const t=state.updated?state.updated.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"";
+    el.className="src-badge live"; el.textContent="● Live"+(t?" · "+t:"");
+  }else if(state.source==="error"){
+    el.className="src-badge error"; el.textContent="⚠ Offline (showing placeholder)";
+  }else{
+    el.className="src-badge placeholder"; el.textContent="Placeholder data";
+  }
+}
+
+function renderAll(){
+  renderFilters();
+  renderLegend();
+  renderProgress();
+  renderMap();
+  setBadge();
+}
+
+/* ============================ DETAIL PANEL ============================ */
+function locationText(u){
+  if(u.block==="Middle") return "Middle Flats";
+  if(u.block==="Duplex") return "Duplexes";
+  const name=BLOCK_FULLNAME[u.block]||u.block;
+  return u.floor ? `${name} · Floor ${u.floor}` : name;
+}
+function fieldHTML(label, value, alert){
+  const v=(value && value.trim()) ? value : "";
+  const cls = "field"+(alert?" alert":"");
+  const vCls = v ? "v" : "v empty";
+  return `<div class="${cls}"><div class="k">${label}</div>`
+       + `<div class="${vCls}">${v ? escapeHtml(v) : "— none —"}</div></div>`;
+}
+function cabinetHTML(value){
+  const v=(value||"").trim();
+  if(!v) return `<div class="field"><div class="k">Cabinet Types</div><div class="v empty">— none —</div></div>`;
+  const parts=v.split(/[;,]/).map(s=>s.trim()).filter(Boolean);
+  const pills=parts.map(p=>`<span class="pill">${escapeHtml(p)}</span>`).join("");
+  return `<div class="field"><div class="k">Cabinet Types</div><div class="v">${pills}</div></div>`;
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+
+function openDetail(n){
+  const u=state.units[n]; if(!u) return;
+  document.getElementById("dTitle").textContent = `Unit ${u.unit_number} — ${u.unit_type}`;
+  document.getElementById("dLoc").textContent = locationText(u);
+  const badge=document.getElementById("dStatus"), col=statusColor(u.status);
+  badge.style.background=col; badge.style.color=textColor(col);
+  badge.querySelector(".dot").style.background=textColor(col);
+  badge.querySelector(".dot").style.opacity=".55";
+  badge.querySelector(".lab").textContent=u.status;
+  document.getElementById("dBody").innerHTML =
+      cabinetHTML(u.cabinet_types)
+    + fieldHTML("Snagging Items", u.snagging, !!(u.snagging&&u.snagging.trim()))
+    + fieldHTML("Missing Parts", u.missing_parts, !!(u.missing_parts&&u.missing_parts.trim()))
+    + fieldHTML("Notes", u.notes, false);
+  const ov=document.getElementById("overlay");
+  ov.classList.add("show"); document.body.style.overflow="hidden";
+}
+function closeDetail(){
+  document.getElementById("overlay").classList.remove("show");
+  document.body.style.overflow="";
+}
+
+/* ============================ EVENTS ============================ */
+document.body.addEventListener("click", e=>{
+  const tile=e.target.closest(".tile");
+  if(tile){ openDetail(tile.dataset.unit); return; }
+  const chip=e.target.closest(".chip");
+  if(chip){ state.filter = (state.filter===chip.dataset.filter) ? "" : chip.dataset.filter;
+            renderFilters(); renderMap(); return; }
+});
+document.getElementById("panelClose").addEventListener("click", closeDetail);
+document.getElementById("overlay").addEventListener("click", e=>{ if(e.target.id==="overlay") closeDetail(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeDetail(); });
+
+document.getElementById("legendToggle").addEventListener("click", ()=>{
+  document.getElementById("legendWrap").classList.toggle("open");
+});
+document.getElementById("btnRefresh").addEventListener("click", ()=>{
+  const b=document.getElementById("btnRefresh"); b.style.transform="rotate(360deg)";
+  setTimeout(()=>b.style.transform="",400); loadData();
+});
+document.getElementById("btnSettings").addEventListener("click", ()=>{
+  const cur=getCsvUrl();
+  const v=prompt("Paste the published Google Sheet CSV URL.\n(Leave blank to clear and use placeholder data.)", cur);
+  if(v===null) return;
+  if(v.trim()) localStorage.setItem("cedarwood_csv_url", v.trim());
+  else localStorage.removeItem("cedarwood_csv_url");
+  loadData();
+});
+
+/* ============================ INIT ============================ */
+renderAll();          // paint placeholder immediately
+loadData();           // then fetch live data
+if(CONFIG.REFRESH_MINUTES>0) setInterval(loadData, CONFIG.REFRESH_MINUTES*60000);
+</script>
+</body>
+</html>
